@@ -10,6 +10,6 @@ Ember Launcher signs you into Minecraft Java 1.21.11 and starts Ember Client. If
 
 Check this exact download on VirusTotal:
 
-https://www.virustotal.com/gui/file/bc9c42884477af9271a9fcf68ad42530468b9956731c4aa835558445de4f543d
+https://www.virustotal.com/gui/file/b0d8f7740efafc4993e1def2a6928575d05eb6aef4be9d8d057446c2114390d5
 
-SHA256: `bc9c42884477af9271a9fcf68ad42530468b9956731c4aa835558445de4f543d`
+SHA256: `b0d8f7740efafc4993e1def2a6928575d05eb6aef4be9d8d057446c2114390d5`
