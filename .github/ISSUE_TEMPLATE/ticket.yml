@@ -1,0 +1,44 @@
+name: Help ticket
+description: Ask the Ember team for help (Ember Launcher and Ember Client fill this in for you)
+title: "[Ticket] "
+labels: ["ticket"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reaching out! Please don't paste passwords, tokens or your email here: this page is public.
+  - type: dropdown
+    id: category
+    attributes:
+      label: What's it about?
+      options:
+        - Bug
+        - Crash
+        - Account
+        - Mods
+        - Question
+        - Report a player
+        - Idea
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versions
+      description: Filled in by Ember.
+  - type: input
+    id: where
+    attributes:
+      label: Sent from
+  - type: input
+    id: log
+    attributes:
+      label: Game log link
+      description: A link from "Share log" in Ember Launcher (it hides sign-in details).
