@@ -2,6 +2,8 @@
 
 Launcher for Valence Client. It used to be called Ember Launcher. Releases on this repo are what installed launchers download.
 
+Discord: https://discord.gg/gugV5kFkm
+
 ## This is not a virus
 
 Windows may say "Windows protected your PC" when you open the download. That is SmartScreen. Valence Launcher is not signed with a paid certificate yet, so Windows shows this for a new download. The file is not a virus.
