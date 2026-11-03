@@ -1,0 +1,38 @@
+name: Announce release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post the release to the Valence Discord
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TAG: ${{ github.event.release.tag_name }}
+          TITLE: ${{ github.event.release.name }}
+          BODY: ${{ github.event.release.body }}
+          URL: ${{ github.event.release.html_url }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set, so this release stays on GitHub only."
+            exit 0
+          fi
+          python - <<'PY'
+          import json, os, urllib.request
+          body = os.environ.get("BODY") or ""
+          if len(body) > 1800:
+              body = body[:1800] + "…"
+          payload = {
+              "username": "Valence",
+              "content": f"**{os.environ.get('TITLE') or os.environ.get('TAG')}** is out.\n{os.environ.get('URL')}\n\n{body}"
+          }
+          req = urllib.request.Request(
+              os.environ["WEBHOOK"],
+              data=json.dumps(payload).encode(),
+              headers={"Content-Type": "application/json", "User-Agent": "Valence"},
+          )
+          urllib.request.urlopen(req, timeout=20)
+          PY
