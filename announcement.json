@@ -1,4 +1,9 @@
 {
-  "active": false,
-  "text": ""
+  "active": true,
+  "title": "Valence Discord",
+  "text": "Join the Valence Discord for help, news and updates.",
+  "level": "info",
+  "link": "https://discord.gg/gugV5kFkm",
+  "posted": "2026-11-03T22:55:00.000Z",
+  "expires": null
 }
