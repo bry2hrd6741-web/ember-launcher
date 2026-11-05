@@ -2,24 +2,823 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Valence Launcher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Valence Client: a free Minecraft 1.21.11 client for Fabric with 109 mods, 12 dances, cosmetics and a launcher that hosts your own servers.">
+<meta property="og:title" content="Valence Client">
+<meta property="og:description" content="109 mods, 12 dances and a launcher that runs your own servers. Free, for Minecraft 1.21.11.">
+<meta name="theme-color" content="#0b0610">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Valence Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f1115;color:#e8e8ea;font:16px/1.5 system-ui,sans-serif}
-  main{max-width:32rem;padding:2rem;text-align:center}
-  h1{margin:0 0 .5rem;font-size:2rem}
-  p{color:#a8abb3}
-  a.btn{display:inline-block;margin:.4rem;padding:.7rem 1.2rem;border-radius:8px;background:#5865f2;color:#fff;text-decoration:none;font-weight:600}
-  a.btn.alt{background:#2a2e37}
+/* Layout: the page opens as Valence's own in-game title screen (menu buttons left, your dancing player right,
+   the orbit-and-grid background), then scrolls into plain sections that use the same glass buttons. */
+:root {
+  color-scheme: dark;
+  --night: #0b0610;        /* page ground: near-black plum */
+  --plum: #150912;         /* raised surfaces */
+  --glass: rgba(30, 16, 22, .74);
+  --line: rgba(255, 255, 255, .09);
+  --line-2: rgba(255, 255, 255, .16);
+  --ember: #c4213a;        /* Valence red (the accent in game) */
+  --ember-2: #e0455c;
+  --violet: #7048e8;
+  --gold: #f0b84a;         /* the electron */
+  --blurple: #5865f2;
+  --text: #f6ecee;
+  --soft: #d8c2c5;
+  --muted: #b29a9e;
+  --faint: #7d676b;
+  --ok: #3fc07a;
+  --display: "Pixelify Sans", "Courier New", ui-monospace, monospace;
+  --body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 12px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--night); color: var(--text); font: 400 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+.wrap { width: 100%; max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--ember-2); }
+.mono { font-family: var(--mono); }
+
+/* ---------- top bar */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--night); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: rgba(11, 6, 16, .62); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; align-items: center; gap: 18px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand b { font: 700 20px/1 var(--display); letter-spacing: .14em; }
+.vmark { width: 30px; height: 30px; overflow: visible; flex-shrink: 0; }
+#vm .vo { fill: none; stroke: var(--ember-2); stroke-width: 3.6; }
+#vm .vs { fill: none; stroke: var(--night); stroke-width: 11.5; stroke-linecap: round; stroke-linejoin: round; }
+#vm .vv { fill: none; stroke: #fff; stroke-width: 6.5; stroke-linecap: round; stroke-linejoin: round; }
+#vm .vc { fill: none; stroke: var(--night); stroke-width: 8; }
+#vm .ve { fill: var(--gold); }
+.nav { display: flex; gap: 4px; margin-left: auto; }
+.nav a { text-decoration: none; color: var(--soft); font-size: 14px; padding: 7px 11px; border-radius: 8px; }
+.nav a:hover { color: #fff; background: rgba(255, 255, 255, .06); }
+.chip-dc { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; font-size: 14px; font-weight: 600; padding: 7px 13px; border-radius: 9px; background: rgba(88, 101, 242, .22); border: 1px solid rgba(88, 101, 242, .55); color: #e3e6ff; }
+.chip-dc:hover { background: var(--blurple); color: #fff; }
+.chip-dc svg { width: 17px; height: 17px; fill: currentColor; }
+@media (max-width: 860px) { .nav { display: none; } .chip-dc { margin-left: auto; } }
+
+/* ---------- hero: the title screen */
+.hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero .wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 32px; align-items: center; padding-block: 64px 72px; }
+@media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; padding-block: 40px 48px; } }
+.wordmark { display: flex; align-items: center; gap: 16px; filter: drop-shadow(0 0 22px rgba(224, 69, 92, .45)); }
+.wordmark .vmark { width: clamp(52px, 8vw, 74px); height: clamp(52px, 8vw, 74px); }
+.wordmark h1 { font: 700 clamp(46px, 8.4vw, 92px)/.9 var(--display); letter-spacing: .08em; }
+.subline { font: 600 12px/1 var(--mono); letter-spacing: .5em; color: var(--ember-2); margin: 10px 0 0 4px; }
+.lede { font-size: clamp(17px, 2vw, 19px); color: var(--soft); max-width: 34em; margin-top: 22px; }
+.lede b { color: #fff; font-weight: 600; }
+.menu { display: grid; gap: 9px; max-width: 470px; margin-top: 26px; }
+.mbtn { position: relative; display: flex; align-items: center; gap: 13px; min-height: 52px; padding: 8px 18px 8px 10px; border-radius: var(--r); text-decoration: none; color: #fff;
+  background: linear-gradient(180deg, rgba(38, 18, 24, .82), rgba(16, 8, 12, .86)); border: 1px solid var(--line-2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+  transition: border-color .2s, box-shadow .25s, transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.mbtn::before { content: ""; position: absolute; left: 0; top: 13px; bottom: 13px; width: 3px; border-radius: 3px; background: var(--ember-2); transform: scaleY(0); transition: transform .25s; }
+.mbtn:hover { border-color: rgba(224, 69, 92, .75); box-shadow: 0 0 22px rgba(224, 69, 92, .28), inset 0 1px 0 rgba(255, 255, 255, .08); transform: translateX(3px); }
+.mbtn:hover::before { transform: scaleY(1); }
+.mbtn .ic { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: rgba(255, 255, 255, .08); flex-shrink: 0; }
+.mbtn .ic svg { width: 17px; height: 17px; }
+.mbtn .lab { font-weight: 700; font-size: 17px; letter-spacing: .01em; }
+.mbtn .side { margin-left: auto; font-size: 13px; color: var(--muted); text-align: right; }
+.mbtn.primary { background: linear-gradient(90deg, #e0455c, #ad1d36); border-color: rgba(255, 160, 175, .55); box-shadow: 0 0 30px rgba(224, 69, 92, .42), inset 0 1px 0 rgba(255, 255, 255, .32); }
+.mbtn.primary .ic { background: rgba(255, 255, 255, .22); }
+.mbtn.primary .side { color: #ffdbe0; }
+.mbtn.primary:hover { box-shadow: 0 0 40px rgba(224, 69, 92, .6), inset 0 1px 0 rgba(255, 255, 255, .32); }
+.mbtn.dc .ic { background: rgba(88, 101, 242, .35); }
+.squares { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.sq { display: grid; place-items: center; gap: 4px; padding: 11px 4px 9px; border-radius: var(--r); text-decoration: none; font-size: 12px; color: var(--soft);
+  background: linear-gradient(180deg, rgba(38, 18, 24, .8), rgba(16, 8, 12, .84)); border: 1px solid var(--line-2); transition: border-color .2s, transform .25s cubic-bezier(.34, 1.56, .64, 1), color .2s; }
+.sq svg { width: 17px; height: 17px; }
+.sq:hover { border-color: rgba(224, 69, 92, .7); color: #fff; transform: translateY(-3px); }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 20px; font: 500 12px/1.4 var(--mono); color: var(--faint); }
+.facts span::before { content: "\25C6"; color: var(--ember); margin-right: 7px; font-size: 9px; }
+
+.stage { position: relative; display: grid; justify-items: center; gap: 14px; padding-top: 10px; }
+.tag { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 9px; font-size: 14px; background: var(--glass); border: 1px solid var(--line-2); }
+.tag .badge { font: 800 10px/1 var(--body); letter-spacing: .06em; padding: 3px 6px; border-radius: 4px; color: #2a1a05; background: linear-gradient(#f6cf73, #d89b26); }
+.glowpad { position: absolute; inset: 0 8% 12%; background: radial-gradient(45% 50% at 50% 50%, rgba(224, 69, 92, .30), transparent 70%); pointer-events: none; }
+.rig { position: relative; width: 192px; height: 384px; margin-top: 4px; }
+.shadow { width: 170px; height: 16px; border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .6), transparent 70%); margin-top: -14px; }
+.part { position: absolute; image-rendering: pixelated; background-size: 100% 100%; }
+.picker { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; background: var(--glass); border: 1px solid var(--line-2); }
+.picker button { all: unset; cursor: pointer; display: grid; place-items: center; min-width: 30px; height: 30px; border-radius: 7px; color: var(--soft); font-size: 18px; }
+.picker button:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+.picker .now { min-width: 150px; padding: 0 10px; font-size: 14px; font-weight: 600; color: #fff; }
+.picker .now small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); line-height: 1.2; }
+.stage-hint { font: 500 12px/1 var(--mono); color: var(--faint); }
+
+/* ---------- sections */
+section { padding-block: 92px; }
+.head { display: grid; gap: 14px; max-width: 760px; margin-bottom: 38px; }
+.head h2 { font: 700 clamp(34px, 5vw, 54px)/1 var(--display); letter-spacing: .02em; }
+.head p { color: var(--soft); font-size: 18px; max-width: 40em; }
+.alt { background: linear-gradient(180deg, var(--plum), var(--night)); border-block: 1px solid var(--line); }
+
+/* mods */
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border-radius: 9px; font-size: 14px; color: var(--soft); background: var(--plum); border: 1px solid var(--line); }
+.tab b { font: 600 11px/1 var(--mono); color: var(--muted); padding: 3px 6px; border-radius: 5px; background: rgba(255, 255, 255, .06); }
+.tab:hover { border-color: var(--line-2); color: #fff; }
+.tab[aria-pressed="true"] { background: linear-gradient(180deg, rgba(224, 69, 92, .32), rgba(224, 69, 92, .1)); border-color: var(--ember-2); color: #fff; }
+.tab[aria-pressed="true"] b { color: #fff; background: rgba(0, 0, 0, .25); }
+.search { margin-left: auto; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; background: var(--plum); border: 1px solid var(--line); min-width: 0; flex: 0 1 280px; }
+.search:focus-within { border-color: var(--ember-2); }
+.search svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+.search input { all: unset; flex: 1; min-width: 0; font-size: 15px; color: #fff; }
+.search input::placeholder { color: var(--faint); }
+@media (max-width: 700px) { .search { margin-left: 0; flex-basis: 100%; } }
+.modgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.mod { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 11px; background: rgba(21, 9, 18, .8); border: 1px solid var(--line); min-width: 0; }
+.mod i { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: grid; place-items: center; font: 700 11px/1 var(--mono); font-style: normal; color: #fff; background: color-mix(in srgb, var(--c) 40%, #1a0b0e); border: 1px solid color-mix(in srgb, var(--c) 70%, transparent); }
+.mod div { min-width: 0; }
+.mod b { display: block; font-size: 15px; font-weight: 600; }
+.mod span { display: block; font-size: 13px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+.mod.new b::after { content: "NEW"; margin-left: 7px; font: 700 9px/1 var(--mono); letter-spacing: .08em; padding: 3px 5px; border-radius: 4px; color: #0a2414; background: #5fd598; vertical-align: 2px; }
+button.cta { cursor: pointer; font-family: var(--body); }
+.more { margin: 18px auto 0; display: flex; width: fit-content; }
+.empty { padding: 30px; text-align: center; color: var(--muted); border: 1px dashed var(--line-2); border-radius: 12px; }
+
+/* dances */
+.dances { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 36px; align-items: center; }
+@media (max-width: 860px) { .dances { grid-template-columns: 1fr; } }
+.dance-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.dbtn { all: unset; cursor: pointer; display: grid; gap: 2px; padding: 11px 14px; border-radius: 11px; background: var(--plum); border: 1px solid var(--line); }
+.dbtn b { font-size: 15px; font-weight: 600; }
+.dbtn span { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.dbtn:hover { border-color: var(--line-2); }
+.dbtn[aria-pressed="true"] { border-color: var(--ember-2); background: linear-gradient(180deg, rgba(224, 69, 92, .26), rgba(224, 69, 92, .06)); }
+.where { display: grid; gap: 10px; margin-top: 18px; }
+.where div { display: flex; gap: 12px; align-items: baseline; font-size: 15px; color: var(--soft); }
+.where kbd, kbd { font: 600 12px/1 var(--mono); padding: 4px 7px; border-radius: 6px; border: 1px solid var(--line-2); border-bottom-width: 3px; background: var(--plum); color: #fff; white-space: nowrap; }
+
+/* feature rows (launcher, hosting) */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+.feats { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.feat { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.feat svg { width: 22px; height: 22px; color: var(--ember-2); margin-top: 3px; }
+.feat b { display: block; font-size: 17px; font-weight: 600; }
+.feat p { color: var(--muted); font-size: 15px; margin-top: 3px; }
+.mock { border-radius: 16px; background: linear-gradient(180deg, #1a0b10, #10070b); border: 1px solid var(--line-2); padding: 18px; box-shadow: 0 30px 60px rgba(0, 0, 0, .45); }
+.mock-title { display: flex; align-items: center; gap: 8px; font: 600 11px/1 var(--mono); letter-spacing: .14em; color: var(--faint); margin-bottom: 14px; }
+.mock-title i { width: 8px; height: 8px; border-radius: 50%; background: #3a2328; }
+.pcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pcard { border-radius: 13px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--c) 35%, #2a1418); background: #120709; }
+.pcard .bn { height: 54px; padding: 10px 12px; display: flex; gap: 9px; align-items: flex-start; background: linear-gradient(135deg, color-mix(in srgb, var(--c) 45%, #1a0b0f), color-mix(in srgb, var(--c) 12%, #120709)); }
+.pcard .pi { width: 34px; height: 34px; border-radius: 10px; background: color-mix(in srgb, var(--c) 85%, #000); display: grid; place-items: center; }
+.pcard .pi svg { width: 18px; height: 18px; color: #fff; }
+.pcard .ty { font: 700 9px/1 var(--mono); letter-spacing: .1em; padding: 4px 6px; border-radius: 5px; background: rgba(0, 0, 0, .3); color: rgba(255, 255, 255, .85); margin-top: 2px; }
+.pcard .bd { padding: 10px 12px 12px; display: grid; gap: 8px; }
+.pcard .nm { font: 700 15px/1.1 var(--display); }
+.pcard .mt { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.pcard .ft { display: flex; align-items: center; gap: 6px; }
+.acct { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 3px 3px; border-radius: 7px; font-size: 12px; color: #fff; background: color-mix(in srgb, var(--c) 16%, #170a0d); border: 1px solid color-mix(in srgb, var(--c) 50%, #2e161b); }
+.acct i { width: 16px; height: 16px; border-radius: 4px; }
+.play { margin-left: auto; width: 28px; height: 26px; border-radius: 7px; background: var(--c); display: grid; place-items: center; }
+.play svg { width: 12px; height: 12px; fill: #fff; }
+.live { font: 700 9px/1 var(--mono); color: #7fe0a8; letter-spacing: .08em; margin-left: auto; padding: 4px 6px; border-radius: 5px; background: rgba(4, 20, 10, .55); }
+.srow { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 14px; border-radius: 13px; border: 1px solid rgba(63, 192, 122, .45); background: #150a0e; box-shadow: 0 0 22px rgba(63, 192, 122, .1); }
+.srow + .srow { margin-top: 10px; border-color: var(--line-2); box-shadow: none; }
+.srow .si { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font: 700 16px/1 var(--display); background: #2a1418; }
+.srow .sm { min-width: 0; flex: 1 1 200px; }
+.srow .sm b { font-size: 15px; }
+.srow .sm b small { font: 600 10px/1 var(--mono); margin-left: 6px; padding: 3px 6px; border-radius: 5px; background: rgba(255, 255, 255, .07); color: var(--soft); vertical-align: 2px; }
+.srow .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.on { color: var(--ok); font-weight: 600; }
+.addr { font-family: var(--mono); padding: 1px 6px; border-radius: 5px; background: rgba(255, 255, 255, .06); color: var(--soft); }
+.warnrow { margin-top: 10px; display: flex; gap: 9px; align-items: center; padding: 8px 11px; border-radius: 10px; font-size: 13px; color: #ffc7cf; background: rgba(255, 90, 110, .1); border: 1px solid rgba(255, 90, 110, .45); width: 100%; }
+.warnrow b { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: #ff5a6e; color: #fff; font-size: 12px; flex-shrink: 0; }
+.sbtns { display: flex; gap: 6px; }
+.sbtn { font-size: 12.5px; padding: 6px 11px; border-radius: 8px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .03); }
+.sbtn.go { background: var(--ember); border-color: var(--ember-2); }
+
+/* cosmetics */
+.cos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .cos { grid-template-columns: 1fr; } }
+.slot { padding: 18px; border-radius: 14px; background: var(--plum); border: 1px solid var(--line); }
+.slot h3 { font: 700 20px/1 var(--display); display: flex; align-items: baseline; gap: 10px; }
+.slot h3 small { font: 600 11px/1 var(--mono); color: var(--faint); letter-spacing: .1em; }
+.slot ul { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 9px; }
+.slot li { display: grid; gap: 1px; }
+.slot li b { font-size: 15px; font-weight: 600; }
+.slot li span { font-size: 13px; color: var(--muted); }
+
+/* fair play */
+.fair { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; padding: 34px; border-radius: 20px; border: 1px solid var(--line-2);
+  background: radial-gradient(80% 120% at 0% 0%, rgba(224, 69, 92, .16), transparent 60%), var(--plum); }
+@media (max-width: 860px) { .fair { grid-template-columns: 1fr; padding: 24px; } }
+.fair h2 { font: 700 clamp(30px, 4vw, 42px)/1.05 var(--display); }
+.fair p { color: var(--soft); margin-top: 12px; }
+.rules { display: grid; gap: 8px; }
+.rule { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 11px; background: rgba(0, 0, 0, .25); border: 1px solid var(--line); font-size: 14.5px; }
+.rule .st { margin-left: auto; font: 700 10px/1 var(--mono); letter-spacing: .08em; padding: 4px 7px; border-radius: 5px; }
+.st.pause { color: #2a1a05; background: var(--gold); }
+.st.never { color: #fff; background: #6a2632; }
+
+/* changelog */
+.log { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .log { grid-template-columns: 1fr; } }
+.rel { padding: 20px; border-radius: 14px; background: var(--plum); border: 1px solid var(--line); }
+.rel .vt { display: flex; align-items: baseline; gap: 10px; }
+.rel .vt b { font: 700 24px/1 var(--display); }
+.rel .vt span { font: 500 12px/1 var(--mono); color: var(--faint); }
+.rel h3 { font-size: 16px; font-weight: 600; margin: 8px 0 10px; color: var(--ember-2); }
+.rel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--soft); font-size: 14px; }
+
+/* download */
+.dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 860px) { .dl { grid-template-columns: 1fr; } }
+.dlcard { display: grid; gap: 14px; align-content: start; padding: 26px; border-radius: 18px; background: var(--plum); border: 1px solid var(--line-2); }
+.dlcard.main { background: radial-gradient(90% 120% at 100% 0%, rgba(224, 69, 92, .22), transparent 60%), var(--plum); border-color: rgba(224, 69, 92, .5); }
+.dlcard h3 { font: 700 28px/1 var(--display); }
+.dlcard .v { font: 600 12px/1 var(--mono); color: var(--faint); }
+.dlcard p { color: var(--soft); }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; font-size: 15px; color: var(--soft); }
+.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font: 700 12px/1 var(--mono); color: #fff; background: rgba(224, 69, 92, .3); }
+.steps code, .faq code { font: 500 13px/1 var(--mono); padding: 2px 6px; border-radius: 5px; background: rgba(255, 255, 255, .07); color: #fff; }
+.dlbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.cta { display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 20px; border-radius: 11px; text-decoration: none; font-weight: 700; font-size: 15px; color: #fff;
+  background: linear-gradient(90deg, #e0455c, #ad1d36); border: 1px solid rgba(255, 160, 175, .55); box-shadow: 0 0 24px rgba(224, 69, 92, .35); }
+.cta:hover { box-shadow: 0 0 34px rgba(224, 69, 92, .55); }
+.cta.ghost { background: rgba(255, 255, 255, .04); border-color: var(--line-2); box-shadow: none; font-weight: 600; }
+.cta.ghost:hover { border-color: var(--ember-2); }
+.cta svg { width: 17px; height: 17px; }
+.osrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.os { font: 600 11px/1 var(--mono); padding: 6px 9px; border-radius: 6px; background: rgba(255, 255, 255, .06); color: var(--soft); }
+
+/* faq */
+.faq { display: grid; gap: 8px; max-width: 860px; }
+.faq details { border-radius: 12px; background: var(--plum); border: 1px solid var(--line); }
+.faq summary { cursor: pointer; list-style: none; padding: 16px 18px; font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; margin-left: auto; font: 500 22px/1 var(--mono); color: var(--ember-2); transition: transform .2s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { padding: 0 18px 18px; color: var(--soft); max-width: 62ch; }
+
+/* discord band + footer */
+.band { padding-block: 70px; background: radial-gradient(70% 130% at 50% 0%, rgba(88, 101, 242, .26), transparent 65%), var(--night); border-top: 1px solid var(--line); text-align: center; }
+.band h2 { font: 700 clamp(30px, 4.5vw, 46px)/1.05 var(--display); }
+.band p { color: var(--soft); margin: 12px auto 22px; max-width: 34em; }
+.band .cta { background: var(--blurple); border-color: #8b95ff; box-shadow: 0 0 30px rgba(88, 101, 242, .45); }
+.invite { display: block; margin-top: 12px; font: 500 13px/1 var(--mono); color: var(--muted); user-select: all; }
+footer { padding-block: 30px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; }
+footer .brand b { font-size: 15px; }
+footer .vmark { width: 22px; height: 22px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 10px 16px; border-radius: 10px; background: #1f1016; border: 1px solid var(--line-2); font-size: 14px; transition: .25s; z-index: 40; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .mbtn, .sq, .tab, .toast { transition: none; } }
 </style>
 </head>
 <body>
-<main>
-  <h1>Valence Launcher</h1>
-  <p>Launcher for Valence Client.</p>
-  <a class="btn" href="https://github.com/bry2hrd6741-web/ember-launcher/releases/latest">Download</a>
-  <a class="btn" href="https://discord.gg/gugV5kFkm">Join the Discord</a>
-  <a class="btn alt" href="https://github.com/bry2hrd6741-web/ember-launcher#this-is-not-a-virus">Is this safe?</a>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="vm" viewBox="6 6 52 52"><ellipse class="vo" cx="32" cy="33" rx="25" ry="9.5" transform="rotate(-24 32 33)"/><path class="vs" d="M19 17 L32 47 L45 17"/><path class="vv" d="M19 17 L32 47 L45 17"/><g transform="rotate(-24 32 33)"><path class="vc" d="M7 33 A25 9.5 0 0 0 57 33"/><path class="vo" d="M7 33 A25 9.5 0 0 0 57 33"/></g><circle class="ve" cx="54.2" cy="22.4" r="4.6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor"/></symbol>
+    <symbol id="i-dl" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></g></symbol>
+    <symbol id="i-mods" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></g></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></g></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2"/><path d="M9 15l-3-3c1-4 4.5-8.5 12-9 0 7.5-5 11-9 12z"/><circle cx="14.5" cy="9.5" r="1.6"/></g></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></g></symbol>
+    <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M20.4 6.6L16 3l-4 2-4-2-4.4 3.6L5 11h2v10h10V11h2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-q" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/></g></symbol>
+    <symbol id="i-discord" viewBox="0 0 24 24"><path fill="currentColor" d="M19.3 5.6A16.4 16.4 0 0 0 15.2 4.3l-.5 1a15.2 15.2 0 0 0-5.4 0l-.5-1a16.4 16.4 0 0 0-4.1 1.3C2.1 9.5 1.4 13.3 1.7 17a16.6 16.6 0 0 0 5 2.5l1.1-1.7a10.7 10.7 0 0 1-1.7-.8l.4-.3a11.8 11.8 0 0 0 11 0l.4.3c-.5.3-1.1.6-1.7.8l1.1 1.7a16.6 16.6 0 0 0 5-2.5c.4-4.3-.7-8-3-11.4zM8.7 14.7c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm6.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.1 4.5 1.8 5 4.6"/></g></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></g></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></g></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></g></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></g></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></g></symbol>
+    <symbol id="i-sword" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14.5 3H21v6.5L10 20.5 3.5 14z"/><path d="M5 16l3 3M3 21l2-2"/></g></symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Valence Client home"><svg class="vmark"><use href="#vm"/></svg><b>VALENCE</b></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#mods">Mods</a><a href="#dances">Dances</a><a href="#launcher">Launcher</a><a href="#hosting">Hosting</a><a href="#cosmetics">Cosmetics</a><a href="#faq">FAQ</a>
+    </nav>
+    <a class="chip-dc" href="https://discord.gg/HMtx6Gn4Kq" target="_blank" rel="noopener"><svg><use href="#i-discord"/></svg>Discord</a>
+  </div>
+</header>
+
+<main id="top">
+  <!-- The page opens as Valence's own title screen -->
+  <section class="hero" style="padding:0">
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="wrap">
+      <div>
+        <div class="wordmark"><svg class="vmark"><use href="#vm"/></svg><h1>VALENCE</h1></div>
+        <div class="subline">CLIENT · 1.21.11</div>
+        <p class="lede"><b>109 mods, 12 dances and a launcher that runs your own servers.</b> A free Minecraft client for Fabric 1.21.11, built for PvP and survival, with nothing that gives you an unfair edge.</p>
+        <div class="menu">
+          <a class="mbtn primary" id="dlTop" href="#download"><span class="ic"><svg><use href="#i-dl"/></svg></span><span class="lab">Download</span><span class="side">Launcher 2.3.0 · Client 2.4.0</span></a>
+          <a class="mbtn dc" href="https://discord.gg/HMtx6Gn4Kq" target="_blank" rel="noopener"><span class="ic"><svg><use href="#i-discord"/></svg></span><span class="lab">Join the Discord</span><span class="side">Help, news, giveaways</span></a>
+          <a class="mbtn" href="#mods"><span class="ic"><svg><use href="#i-mods"/></svg></span><span class="lab">See every mod</span><span class="side">109 and counting</span></a>
+          <div class="squares">
+            <a class="sq" href="#dances"><svg><use href="#i-music"/></svg>Dances</a>
+            <a class="sq" href="#launcher"><svg><use href="#i-rocket"/></svg>Launcher</a>
+            <a class="sq" href="#hosting"><svg><use href="#i-server"/></svg>Hosting</a>
+            <a class="sq" href="#cosmetics"><svg><use href="#i-shirt"/></svg>Cosmetics</a>
+            <a class="sq" href="#faq"><svg><use href="#i-q"/></svg>FAQ</a>
+          </div>
+        </div>
+        <div class="facts"><span>Minecraft 1.21.11</span><span>Fabric</span><span>Free</span><span>Windows · macOS · Linux</span></div>
+      </div>
+      <div class="stage">
+        <div class="glowpad"></div>
+        <span class="tag">You <span class="badge">★ VALENCE</span></span>
+        <div class="rig" id="rigHero" aria-label="A Minecraft player dancing"></div>
+        <div class="shadow"></div>
+        <div class="picker" role="group" aria-label="Choose a dance">
+          <button type="button" id="prevD" aria-label="Previous dance">‹</button>
+          <span class="now" id="nowD" aria-live="polite">Vibin<small>A relaxed groove</small></span>
+          <button type="button" id="nextD" aria-label="Next dance">›</button>
+        </div>
+        <span class="stage-hint">Click the arrows · or press ← →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mods -->
+  <section id="mods">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">The mod menu</span>
+        <h2>109 mods, one menu</h2>
+        <p>Press Right Shift in game and switch any of them on with a click. Every HUD mod can be dragged, resized and saved into one of three layouts.</p>
+      </div>
+      <div class="tools">
+        <div class="tabs" id="modTabs" role="group" aria-label="Category"></div>
+        <label class="search" for="modSearch"><svg><use href="#i-search"/></svg><input id="modSearch" type="search" placeholder="Search mods, like zoom or ping" autocomplete="off"></label>
+      </div>
+      <div class="modgrid" id="modGrid"></div>
+      <button type="button" class="cta ghost more" id="moreMods">Show all mods</button>
+    </div>
+  </section>
+
+  <!-- Dances -->
+  <section id="dances" class="alt">
+    <div class="wrap dances">
+      <div>
+        <div class="head" style="margin-bottom:22px">
+          <span class="eyebrow">Emotes</span>
+          <h2>12 dances, from the Griddy to the Macarena</h2>
+          <p>Your player dances on the title screen and in the launcher. In game, press B to dance in third person. Pick one to see it.</p>
+        </div>
+        <div class="dance-list" id="danceList"></div>
+        <div class="where">
+          <div><kbd>B</kbd>Dance in game (third person), walk to stop</div>
+          <div><kbd>D</kbd>Change dance on the title screen</div>
+          <div><kbd>Ctrl Shift D</kbd>Next dance in the launcher</div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="glowpad"></div>
+        <div class="rig" id="rigDance" aria-label="A Minecraft player doing the selected dance"></div>
+        <div class="shadow"></div>
+        <span class="stage-hint" id="danceNow">Vibin</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Launcher -->
+  <section id="launcher">
+    <div class="wrap split">
+      <div>
+        <div class="head" style="margin-bottom:22px">
+          <span class="eyebrow">Valence Launcher</span>
+          <h2>A launcher that fixes things for you</h2>
+          <p>Sign in with Microsoft, press Play. Valence Launcher downloads Minecraft, Fabric and Java, keeps your mods up to date and gets you back in when something breaks.</p>
+        </div>
+        <div class="feats">
+          <div class="feat"><svg><use href="#i-users"/></svg><div><b>A profile for every account</b><p>Each profile can play on its own Microsoft account, so you can run your main and your alt side by side.</p></div></div>
+          <div class="feat"><svg><use href="#i-pulse"/></svg><div><b>Mod Doctor</b><p>Finds the mod that crashed your game, turns it off and tells you why. It can also find a broken mod by testing them in halves.</p></div></div>
+          <div class="feat"><svg><use href="#i-box"/></svg><div><b>Mods, packs and shaders from Modrinth</b><p>Search, install and update in one place. Modpacks install as their own profile.</p></div></div>
+          <div class="feat"><svg><use href="#i-search"/></svg><div><b>Find anything with <kbd>Ctrl K</kbd></b><p>Jump to a page, play a profile, join a server, switch accounts or open a folder by typing a few letters.</p></div></div>
+          <div class="feat"><svg><use href="#i-chart"/></svg><div><b>Playtime, streaks and notes</b><p>A weekly goal, break reminders and a notepad per profile for seeds, coordinates and to-dos.</p></div></div>
+        </div>
+      </div>
+      <div class="mock" aria-label="Example profiles in Valence Launcher">
+        <div class="mock-title"><i></i><i></i><i></i>YOUR PROFILES</div>
+        <div class="pcards">
+          <div class="pcard" style="--c:#c4213a"><div class="bn"><span class="pi"><svg class="vmark" style="width:22px;height:22px"><use href="#vm"/></svg></span><span class="ty">VALENCE CLIENT</span></div>
+            <div class="bd"><span class="nm">Valence Client</span><span class="mt">78 mods · 122h played</span><div class="ft"><span class="acct"><i style="background:#2a63a8"></i>Main</span><span class="play"><svg><use href="#i-play"/></svg></span></div></div></div>
+          <div class="pcard" style="--c:#3f7ad9"><div class="bn"><span class="pi"><svg><use href="#i-sword"/></svg></span><span class="ty">FABRIC</span><span class="live">PLAYING</span></div>
+            <div class="bd"><span class="nm">PvP</span><span class="mt">12 mods · 31h played</span><div class="ft"><span class="acct"><i style="background:#c88a12"></i>Alt account</span><span class="play" style="opacity:.45"><svg><use href="#i-play"/></svg></span></div></div></div>
+          <div class="pcard" style="--c:#2b8a3e"><div class="bn"><span class="pi"><svg><use href="#i-box"/></svg></span><span class="ty">VALENCE CLIENT</span></div>
+            <div class="bd"><span class="nm">Survival</span><span class="mt">31 mods · 11h played</span><div class="ft"><span class="acct"><i style="background:#2a63a8"></i>Main</span><span class="play"><svg><use href="#i-play"/></svg></span></div></div></div>
+          <div class="pcard" style="--c:#7048e8"><div class="bn"><span class="pi"><svg><use href="#i-rocket"/></svg></span><span class="ty">FABRIC</span></div>
+            <div class="bd"><span class="nm">Shaders</span><span class="mt">Sodium + Iris · new</span><div class="ft"><span class="acct"><i style="background:#2a63a8"></i>Main</span><span class="play"><svg><use href="#i-play"/></svg></span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hosting -->
+  <section id="hosting" class="alt">
+    <div class="wrap split">
+      <div class="mock" aria-label="Example hosted servers in Valence Launcher">
+        <div class="mock-title"><i></i><i></i><i></i>HOSTING</div>
+        <div class="srow">
+          <span class="si">F</span>
+          <div class="sm"><b>Friends SMP<small>FABRIC 1.21.11</small></b>
+            <div class="meta"><span class="on">● Online · 3 playing</span><span class="addr">friends.joinmc.link</span><span>Up 1h 23m</span><span>Auto restart</span></div></div>
+          <div class="sbtns"><span class="sbtn">Console</span><span class="sbtn">Manage</span></div>
+        </div>
+        <div class="srow">
+          <span class="si">C</span>
+          <div class="sm"><b>Creative Build<small>VANILLA 1.21.11</small></b>
+            <div class="meta"><span>● Offline</span><span class="addr">192.168.1.20:25566</span><span>Backed up 2h ago</span></div></div>
+          <div class="sbtns"><span class="sbtn go">Start</span><span class="sbtn">Manage</span></div>
+          <div class="warnrow"><b>!</b>Another program is already using this port. Stop it, or pick another port in Settings.</div>
+        </div>
+      </div>
+      <div>
+        <div class="head" style="margin-bottom:22px">
+          <span class="eyebrow">Hosting</span>
+          <h2>Your own server in a few clicks</h2>
+          <p>Make a Fabric or Vanilla 1.21.11 server on your PC. Friends on your Wi-Fi join straight away, and a free tunnel lets anyone join.</p>
+        </div>
+        <div class="feats">
+          <div class="feat"><svg><use href="#i-refresh"/></svg><div><b>Looks after itself</b><p>Starts again if it crashes, backs up the world every time it stops and keeps the newest eight backups.</p></div></div>
+          <div class="feat"><svg><use href="#i-shield"/></svg><div><b>Says what went wrong</b><p>Port in use, the wrong Java, not enough memory or a broken mod, in plain words on the server's card.</p></div></div>
+          <div class="feat"><svg><use href="#i-users"/></svg><div><b>Players in one place</b><p>Who's online, the whitelist, operators, bans and who played recently, with Op, Kick and Ban buttons.</p></div></div>
+          <div class="feat"><svg><use href="#i-box"/></svg><div><b>Server mods</b><p>Add Fabric API, Lithium and FerriteCore in one click, or any Modrinth mod, checked for 1.21.11.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cosmetics -->
+  <section id="cosmetics">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Cosmetics</span>
+        <h2>23 cosmetics, free</h2>
+        <p>Wear one hat, one back item and one extra at a time, each in your own colors. Other Valence players see what you wear.</p>
+      </div>
+      <div class="cos" id="cosList"></div>
+    </div>
+  </section>
+
+  <!-- Fair play -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="fair">
+        <div>
+          <span class="eyebrow">Fair play</span>
+          <h2 style="margin-top:12px">Built to be allowed everywhere</h2>
+          <p>Valence has no x-ray, no reach, no autoclicker and no fullbright. When you join a server that bans a mod, Valence pauses that mod for you and turns it back on when you leave.</p>
+        </div>
+        <div class="rules" aria-label="Examples of how Valence follows server rules">
+          <div class="rule">Freelook on Hypixel<span class="st pause">PAUSED</span></div>
+          <div class="rule">Snaplook on servers that ban it<span class="st pause">PAUSED</span></div>
+          <div class="rule">X-ray, reach, autoclickers<span class="st never">NEVER IN VALENCE</span></div>
+          <div class="rule">Zoom, HUD, cosmetics, FPS boosts<span class="st" style="color:#0a2414;background:#5fd598">ALLOWED</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Changelog -->
+  <section class="alt" id="news">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">What's new</span>
+        <h2>Updated all the time</h2>
+        <p>The launcher installs client updates by itself, and shows what changed the first time you open a new version.</p>
+      </div>
+      <div class="log">
+        <div class="rel"><div class="vt"><b>2.4.0</b><span>CLIENT · NOV 2026</span></div><h3>New Home</h3><ul><li>A new title screen with wide menu buttons</li><li>The Valence background: glows, orbit rings, stars and a grid floor</li><li>You stand big on the right with your dance</li></ul></div>
+        <div class="rel"><div class="vt"><b>2.3.0</b><span>LAUNCHER · NOV 2026</span></div><h3>Your Accounts, Your Servers</h3><ul><li>A different account for each profile</li><li>Hosting backups, auto restart and a Manage window</li><li>Server mods from Modrinth in one click</li></ul></div>
+        <div class="rel"><div class="vt"><b>2.1.0</b><span>CLIENT · NOV 2026</span></div><h3>Dance Floor</h3><ul><li>12 dances and the Emotes mod</li><li>Motion Blur, Item Physics and Smooth Chunks</li><li>Own Nametag in third person</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section id="download">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Download</span>
+        <h2>Get Valence</h2>
+        <p>The launcher is the easy way: it installs everything and keeps it updated. Already have a launcher you like? Use the client on its own.</p>
+      </div>
+      <div class="dl">
+        <div class="dlcard main">
+          <span class="v">VALENCE LAUNCHER · 2.3.0</span>
+          <h3>Valence Launcher</h3>
+          <p>Minecraft, Fabric, Java and Valence Client in one install. Sign in with your Microsoft account and press Play.</p>
+          <div class="osrow"><span class="os">WINDOWS</span><span class="os">MACOS</span><span class="os">LINUX</span></div>
+          <div class="dlbtns"><a class="cta" id="dlLauncher" href="https://github.com/bry2hrd6741-web/ember-launcher/releases/latest" target="_blank" rel="noopener"><svg><use href="#i-dl"/></svg>Download the launcher</a></div>
+        </div>
+        <div class="dlcard">
+          <span class="v">VALENCE CLIENT · 2.4.0 · FABRIC 1.21.11</span>
+          <h3>Just the client</h3>
+          <ol class="steps">
+            <li><span>Install Fabric for 1.21.11 (the Modrinth app, Prism and CurseForge all do this for you).</span></li>
+            <li><span>Add <code>Fabric API</code> to the profile.</span></li>
+            <li><span>Put <code>valenceclient-2.4.0.jar</code> in the <code>mods</code> folder and start the game.</span></li>
+          </ol>
+          <div class="dlbtns"><a class="cta ghost" id="dlClient" href="https://github.com/bry2hrd6741-web/ember-launcher/releases/latest" target="_blank" rel="noopener"><svg><use href="#i-dl"/></svg>Download the jar</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="alt">
+    <div class="wrap">
+      <div class="head"><span class="eyebrow">FAQ</span><h2>Questions</h2></div>
+      <div class="faq">
+        <details open><summary>Is Valence free?</summary><p>Yes. The client, the launcher, the cosmetics and hosting your own server are all free.</p></details>
+        <details><summary>Can I use it on Hypixel and other servers?</summary><p>Valence only has mods that don't give an unfair advantage, and it pauses a mod on servers that ban it, like Freelook on Hypixel. As with any client, follow each server's rules.</p></details>
+        <details><summary>Which Minecraft version does it support?</summary><p>Java Edition 1.21.11 on Fabric. Bedrock isn't supported.</p></details>
+        <details><summary>Is my Microsoft account safe?</summary><p>You sign in on Microsoft's own page, and your sign-in stays in the launcher on your PC. It's never shared with Valence's servers or put in exported files.</p></details>
+        <details><summary>Can other people see my cosmetics and dances?</summary><p>Other players using Valence see your cosmetics and the Valence mark on your name. Dances only show in your own game, because servers don't send them to other players.</p></details>
+        <details><summary>Where do I get help?</summary><p>Ask in the Valence Discord at <code>discord.gg/HMtx6Gn4Kq</code>. The team and other players answer there.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <h2>Join the Valence Discord</h2>
+      <p>Get help, hear about updates first, enter giveaways and find people to play with.</p>
+      <a class="cta" href="https://discord.gg/HMtx6Gn4Kq" target="_blank" rel="noopener"><svg><use href="#i-discord"/></svg>Join the Discord</a>
+      <span class="invite">discord.gg/HMtx6Gn4Kq</span>
+    </div>
+  </section>
 </main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><svg class="vmark"><use href="#vm"/></svg><b>VALENCE</b></span>
+    <span>Made by 0jkl</span>
+    <span style="margin-left:auto">Not affiliated with Mojang or Microsoft. Minecraft is a trademark of Mojang AB.</span>
+  </div>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const MODS=[["absorption","Absorption","Your golden hearts as a number","PVP"],["afk_timer","AFK Timer","How long you've been away","HUD"],["armor_status","Armor Status","Armor and held item durability","HUD"],["attack_cooldown","Attack Cooldown","A bar showing when your swing is fully charged","PVP"],["auto_gg","Auto GG","Says gg when a match ends","UTILITY"],["biome","Biome","The biome you're standing in","HUD"],["block_overlay","Block Overlay","Custom fill on the block you target","VISUAL"],["boss_bar","Boss Bar","Shrink or hide the boss health bar","HUD"],["bow_charge","Bow Charge","Shows how far your bow is drawn","PVP"],["break_reminder","Break Reminder","Reminds you to take a break","UTILITY"],["breath_meter","Breath & Armor","Air left underwater and armor points","HUD"],["calm_camera","Calm Camera","No nausea or portal screen warping","VISUAL"],["chat_macros","Chat Macros","Keys that send a message or command","UTILITY"],["chat_tweaks","Chat Tweaks","Timestamps on chat messages","UTILITY"],["chunk_info","Chunk Info","Your chunk, position in it and region","HUD"],["clock","Clock","Real-world time in the corner","HUD"],["combat_timer","Combat Timer","How long until you're out of combat","PVP"],["combo_counter","Combo Counter","Counts hits in a row in PvP","HUD"],["compass_bar","Compass Bar","A heading strip that slides as you turn","HUD"],["coordinates","Coordinates","XYZ position and facing","HUD"],["copy_coords","Copy Coordinates","One key copies your XYZ","UTILITY"],["cps","CPS Counter","Displays your clicks per second","HUD"],["crit_indicator","Crit Indicator","Shows when your next hit will crit","PVP"],["crosshair","Crosshair","Custom crosshair shape and color","VISUAL"],["damage_indicator","Damage Numbers","Shows the hearts each of your hits did","PVP"],["day_counter","Day Counter","Which in-game day it is","HUD"],["death_coords","Death Coordinates","Shows where you died so you can get back","UTILITY"],["death_counter","Death Counter","Deaths this session","HUD"],["dimension_hud","Dimension","Overworld, Nether or End","HUD"],["direction_hud","Direction HUD","Compass strip along the top","HUD"],["durability_alert","Durability Alert","Warns before your gear breaks","UTILITY"],["dynamic_fps","Dynamic FPS","Lowers FPS while the game is in the background","PERFORMANCE"],["emotes","Emotes","Press B to dance: Griddy, Floss, Renegade and more (you see it in third person)","VISUAL"],["entity_culling","Entity Culling","Skips drawing far-away mobs","PERFORMANCE"],["entity_distance","Entity Distance","Draw entities closer in for more FPS","PERFORMANCE"],["fall_distance","Fall Distance","How far you have fallen so far, with a ! once it will hurt","HUD"],["food_alert","Food Alert","Warns you before hunger stops your sprint","PVP"],["fps_boost","FPS Boost","Trims extra effects for higher frames","PERFORMANCE"],["fps","FPS Display","Frame rate readout on screen","HUD"],["frame_graph","Frame Graph","A graph of your frame times to spot stutters","HUD"],["freelook","Freelook","Hold a key to look around without turning","VISUAL"],["game_time","Game Time","The in-game time as a clock","HUD"],["health_display","Health Display","Your exact health as a number","HUD"],["held_item","Held Item","Name and durability of what you're holding","HUD"],["hit_color","Hit Color","Recolor the damage tint","VISUAL"],["hit_delay","Hit Delay","Milliseconds between your hits","PVP"],["hit_marker","Hit Marker","A quick X when you land a hit","VISUAL"],["hit_sounds","Hit Sounds","A ding when you hit a player","PVP"],["hotbar_durability","Hotbar Durability","Durability numbers above tools in your hotbar","HUD"],["hotbar_numbers","Hotbar Numbers","Slot numbers on your hotbar","VISUAL"],["hunger_display","Hunger Display","Your food level as a number","HUD"],["inventory_hud","Inventory HUD","See your inventory without opening it","HUD"],["item_counter","Item Counter","Counts arrows, pearls, gapples, totems","HUD"],["item_physics","Item Physics","Dropped items lie flat on the ground","VISUAL"],["kd_tracker","K/D Tracker","Kills, deaths and streak this session","PVP"],["keystrokes","Keystrokes","Shows WASD, mouse and space presses","HUD"],["kill_effects","Kill Effects","Sound and a flash when you get a kill","PVP"],["kill_feed","Kill Feed","Recent kills from chat, yours highlighted","PVP"],["lag_warning","Lag Warning","Warns you when your ping gets high","PVP"],["light_level","Light Level","Block light where you stand","HUD"],["looking_at","Looking At","The block under your crosshair","HUD"],["low_fire","Low Fire","Smaller fire overlay when burning","VISUAL"],["low_health","Low Health Warning","Red screen edges when you're nearly dead","UTILITY"],["memory_usage","Memory Usage","RAM used by the game","HUD"],["mention_alert","Mention Alert","Pings you when someone says your name","UTILITY"],["motion_blur","Motion Blur","Smooth blur when turning","VISUAL"],["mouse_strokes","Mouse Strokes","Shows your mouse movement on screen","PVP"],["movement_status","Movement Status","Sprinting, sneaking or walking","PVP"],["nether_coords","Nether Coords","Matching portal coordinates in the other dimension","HUD"],["nick_hider","Nick Hider","Hides your name in chat for streaming","VISUAL"],["no_hurt_cam","No Hurt Cam","Stops the screen shaking when you're hit","VISUAL"],["no_view_bobbing","No View Bobbing","Steady camera while walking","VISUAL"],["old_animations","Old Animations","Classic 1.7-style instant sneak camera","VISUAL"],["own_nametag","Own Nametag","See your own name above your head in third person","VISUAL"],["pack_display","Pack Display","The resource packs you're using","HUD"],["particle_filter","Particle Filter","Turn off chosen particle types","PERFORMANCE"],["particle_limiter","Particle Limiter","Fewer particles for smoother fights","PERFORMANCE"],["ping","Ping Display","Your latency to the server","HUD"],["players_nearby","Players Nearby","How many other players are within 64 blocks","HUD"],["potion_effects","Potion Effects","Active effects with timers","HUD"],["pvp_stats","PvP Stats","Hits, accuracy and best combo this session","PVP"],["reach_display","Reach Display","Distance of your last hit","HUD"],["render_tweaks","Render Tweaks","Skip beacon beams, books and paintings","PERFORMANCE"],["rotation_hud","Rotation","Your exact yaw and pitch","HUD"],["saturation","Saturation","Hidden food value that delays hunger","HUD"],["scoreboard","Scoreboard","Scale or hide the sidebar","UTILITY"],["screenshot_manager","Screenshot Manager","Browse, open and delete screenshots","UTILITY"],["server_address","Server Address","Shows the IP you are playing on","HUD"],["session_time","Session Time","How long you've been playing","HUD"],["sky_tweaks","Sky Tweaks","Hide the sun, moon or stars","VISUAL"],["smooth_chunks","Smooth Chunks","Builds chunks in the background to cut stutter","PERFORMANCE"],["snaplook","Snaplook","Hold a key to look behind you","PVP"],["speedometer","Speedometer","Your speed in blocks per second","HUD"],["stopwatch","Stopwatch","Press a key to start and stop a timer","HUD"],["tab_list","Tab List","Shrink the player list","HUD"],["target_hud","Target HUD","Health of whoever you're looking at","HUD"],["target_indicator","Target Indicator","Crosshair ring when you're aiming at a player","PVP"],["time_changer","Time Changer","Set your own time of day locally","VISUAL"],["title_tweaks","Title Tweaks","Shrink or hide big screen titles","HUD"],["toast_hider","Toast Hider","Hide recipe and tutorial pop-ups","UTILITY"],["toggle_sprint","Toggle Sprint","Press once to keep sprinting","UTILITY"],["totem_counter","Totem Counter","Totems left and how many popped","PVP"],["unlock_fps","Unlock FPS","No VSync and no frame cap","PERFORMANCE"],["wtap_indicator","W-Tap Indicator","Shows your sprint resets after hits","PVP"],["waypoints","Waypoints","Save and mark your own locations","UTILITY"],["weather_hud","Weather","Clear, rain or thunder at a glance","HUD"],["weather_changer","Weather Changer","See clear skies, rain or thunder (just for you)","VISUAL"],["xp_level","XP Level","Your level and how far into it you are","HUD"],["zoom","Zoom","Hold a key to zoom the camera","VISUAL"]];
+const DANCES={"fields":["rax","ray","raz","lax","lay","laz","rlx","rlz","llx","llz","hx","hy","hz","bx","by","bz"],"dances":[{"id":"vibin","name":"Vibin","about":"A relaxed groove with a hand up every few bars","procedural":true},{"id":"floss","name":"Floss","about":"Arms swing past the hips, front and back","bpm":118,"keysPerBeat":2,"bounce":0.2,"snap":false,"keys":[{"rax":0.35,"raz":0.55,"lax":-0.4,"laz":0.55,"bx":1.6,"bz":-0.05,"hz":0.05},{"lax":-0.4,"laz":-0.55,"rax":0.35,"raz":-0.55,"bx":-1.6,"bz":0.05}]},{"id":"griddy","name":"Griddy","about":"Heel taps, swinging arms and the goggles","bpm":104,"keysPerBeat":2,"bounce":0.0,"snap":false,"keys":[{"rlx":-0.65,"llx":0.15,"rax":0.7,"raz":0.15,"lax":-0.55,"laz":-0.15,"by":1.2,"hx":0.12},{"by":0.2,"rax":0.1,"lax":-0.1},{"llx":-0.65,"rlx":0.15,"lax":0.7,"laz":-0.15,"rax":-0.55,"raz":0.15,"by":1.2,"hx":0.12},{"by":0.2,"rax":0.1,"lax":-0.1},{"rlx":-0.65,"llx":0.15,"rax":0.7,"raz":0.15,"lax":-0.55,"laz":-0.15,"by":1.2,"hx":0.12},{"by":0.2,"rax":0.1,"lax":-0.1},{"llx":-0.65,"rlx":0.15,"lax":0.7,"laz":-0.15,"rax":-0.55,"raz":0.15,"by":1.2,"hx":0.12},{"by":0.2,"rax":0.1,"lax":-0.1},{"rax":-2.25,"raz":-0.55,"lax":-2.25,"laz":0.55,"hx":-0.15,"by":0.8,"rlx":-0.55},{"rax":-2.25,"raz":-0.55,"lax":-2.25,"laz":0.55,"hx":-0.15,"by":0.2},{"rax":-2.25,"raz":-0.55,"lax":-2.25,"laz":0.55,"hx":-0.15,"by":0.8,"llx":-0.55},{"rax":-2.25,"raz":-0.55,"lax":-2.25,"laz":0.55,"hx":-0.15,"by":0.2}]},{"id":"renegade","name":"Renegade","about":"The TikTok routine: swings, crosses, waves and pats","bpm":96,"keysPerBeat":1,"bounce":0.4,"snap":false,"keys":[{"rax":-2.0,"raz":0.6,"lax":0.2,"laz":-0.7,"bx":-1.2,"hz":0.1},{"lax":-2.0,"laz":-0.6,"rax":0.2,"raz":0.7,"bx":1.2,"hz":-0.1},{"rax":-1.4,"raz":-0.65,"lax":-1.4,"laz":0.65,"by":1.5,"hx":0.15},{"raz":1.3,"laz":-1.3,"hz":0.2},{"rax":-2.9,"raz":0.1,"lax":0.1,"bx":1.5,"by":0.5},{"lax":-2.9,"laz":-0.1,"rax":0.1,"bx":-1.5,"by":0.5},{"rax":-0.9,"lax":-0.9,"by":2.6,"hx":0.45,"rlx":-0.3,"llx":-0.3},{"rax":-2.6,"raz":-0.3,"lax":-2.6,"laz":0.3,"by":-0.6}]},{"id":"woah","name":"The Woah","about":"Groove, groove, then freeze to the side","bpm":100,"keysPerBeat":1,"bounce":0.5,"snap":false,"keys":[{"by":0.6,"rax":-0.3,"lax":-0.3},{"by":1.0},{"rax":-1.0,"raz":1.05,"ray":0.3,"lax":-0.45,"laz":-0.25,"by":2.2,"bz":-0.12,"hz":0.18,"hy":-0.25},{"rax":-1.0,"raz":1.05,"ray":0.3,"lax":-0.45,"laz":-0.25,"by":2.2,"bz":-0.12,"hz":0.18,"hy":-0.25},{"by":0.6,"rax":-0.3,"lax":-0.3},{"by":1.0},{"lax":-1.0,"laz":-1.05,"lay":-0.3,"rax":-0.45,"raz":0.25,"by":2.2,"bz":0.12,"hz":-0.18,"hy":0.25},{"lax":-1.0,"laz":-1.05,"lay":-0.3,"rax":-0.45,"raz":0.25,"by":2.2,"bz":0.12,"hz":-0.18,"hy":0.25}]},{"id":"macarena","name":"Macarena","about":"The classic, hand by hand, with a hip wiggle","bpm":103,"keysPerBeat":1,"bounce":0.0,"snap":false,"keys":[{"rax":-1.55},{"rax":-1.55,"lax":-1.55},{"rax":-1.55,"ray":1.5,"lax":-1.55},{"rax":-1.55,"ray":1.5,"lax":-1.55,"lay":-1.5},{"rax":-1.45,"raz":-0.95,"lax":-1.55,"lay":-1.5},{"rax":-1.45,"raz":-0.95,"lax":-1.45,"laz":0.95},{"rax":-2.6,"raz":-0.75,"lax":-1.45,"laz":0.95,"hx":0.15},{"rax":-2.6,"raz":-0.75,"lax":-2.6,"laz":0.75,"hx":0.15},{"rax":-0.5,"raz":-0.5,"lax":-2.6,"laz":0.75},{"rax":-0.5,"raz":-0.5,"lax":-0.5,"laz":0.5},{"rax":-0.5,"raz":-0.5,"lax":-0.5,"laz":0.5,"bx":1.8,"bz":-0.08},{"rax":-0.5,"raz":-0.5,"lax":-0.5,"laz":0.5,"bx":-1.8,"bz":0.08},{"rax":-0.5,"raz":-0.5,"lax":-0.5,"laz":0.5,"bx":1.8,"bz":-0.08},{"rax":-2.7,"lax":-2.7,"by":-1.6},{"by":0.8},{}]},{"id":"orange_justice","name":"Orange Justice","about":"Big low arm swings with knee kicks","bpm":112,"keysPerBeat":2,"bounce":0.0,"snap":false,"keys":[{"rax":-0.9,"raz":-0.6,"lax":-0.2,"laz":-0.9,"rlx":-0.7,"by":0.6,"bz":0.1,"hz":-0.1},{"by":1.2},{"lax":-0.9,"laz":0.6,"rax":-0.2,"raz":0.9,"llx":-0.7,"by":0.6,"bz":-0.1,"hz":0.1},{"by":1.2}]},{"id":"dab","name":"Dab","about":"Bounce, bounce, dab","bpm":100,"keysPerBeat":1,"bounce":0.4,"snap":false,"keys":[{"by":0.8},{},{"lax":-1.95,"laz":0.95,"lay":0.4,"rax":-1.25,"raz":1.7,"hx":0.55,"hy":0.5,"hz":0.2,"by":1.0},{"lax":-1.95,"laz":0.95,"lay":0.4,"rax":-1.25,"raz":1.7,"hx":0.55,"hy":0.5,"hz":0.2,"by":1.0},{"by":0.8},{},{"rax":-1.95,"raz":-0.95,"ray":-0.4,"lax":-1.25,"laz":-1.7,"hx":0.55,"hy":-0.5,"hz":-0.2,"by":1.0},{"rax":-1.95,"raz":-0.95,"ray":-0.4,"lax":-1.25,"laz":-1.7,"hx":0.55,"hy":-0.5,"hz":-0.2,"by":1.0}]},{"id":"robot","name":"Robot","about":"Stiff arms and snappy turns","bpm":92,"keysPerBeat":2,"bounce":0.0,"snap":true,"keys":[{"rax":-1.55,"hy":0.45},{"rax":-1.55,"lax":-1.55,"hy":0.45},{"lax":-1.55,"hy":-0.45,"bx":1.0},{"rax":-1.55,"raz":-0.6,"lax":-1.55,"laz":0.6},{"raz":1.5,"laz":-1.5,"hx":0.3},{"raz":1.5,"laz":-1.5,"hx":-0.2,"by":1.0},{"rax":-2.9,"hy":-0.45,"bx":-1.0},{"lax":-2.9,"hy":0.45}]},{"id":"hype","name":"Hype","about":"Fist pumps and knee raises","bpm":120,"keysPerBeat":2,"bounce":0.0,"snap":false,"keys":[{"rax":-2.65,"raz":0.2,"lax":0.35,"laz":-0.2,"llx":-0.9,"by":-0.4,"hx":-0.15,"bz":0.06},{"by":1.2,"rax":-0.4,"lax":-0.4},{"lax":-2.65,"laz":-0.2,"rax":0.35,"raz":0.2,"rlx":-0.9,"by":-0.4,"hx":-0.15,"bz":-0.06},{"by":1.2,"rax":-0.4,"lax":-0.4}]},{"id":"wave","name":"Wave","about":"A wave that rolls from one hand to the other","bpm":90,"keysPerBeat":2,"bounce":0.0,"snap":false,"keys":[{"raz":1.5,"laz":-1.5,"rax":-0.2},{"raz":1.2,"laz":-1.5,"by":0.3,"hz":0.12},{"raz":1.45,"laz":-1.6,"by":0.8,"bx":-0.8},{"raz":1.5,"laz":-1.3,"by":0.3,"hz":-0.12,"bx":0.8},{"raz":1.6,"laz":-1.45,"by":-0.2}]},{"id":"smeeze","name":"Smeeze","about":"A smooth side slide with bouncing shoulders","bpm":110,"keysPerBeat":2,"bounce":0.3,"snap":false,"keys":[{"rax":-0.5,"raz":0.25,"lax":-0.5,"laz":-0.25,"bx":1.6,"by":1.4,"bz":-0.08,"rlz":0.12,"llz":-0.05,"hz":0.08},{"by":0.5,"rax":-0.3,"lax":-0.3},{"lax":-0.5,"laz":-0.25,"rax":-0.5,"raz":0.25,"bx":-1.6,"by":1.4,"bz":0.08,"llz":-0.12,"rlz":0.05,"hz":-0.08},{"by":0.5,"rax":-0.3,"lax":-0.3}]}]};
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------------------------------------------------------------- the Valence background (same as in game)
+  const sky = $('#sky');
+  const ctx = sky.getContext('2d');
+  let W = 0, H = 0, dpr = 1;
+  const stars = Array.from({ length: 120 }, (_, i) => ({ x: (i * 7919 % 10000) / 10000, y: (i * 104729 % 7000) / 10000, p: (i * 31) % 628 / 100 }));
+  function size() {
+    const r = sky.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = r.width; H = r.height;
+    sky.width = Math.round(W * dpr); sky.height = Math.round(H * dpr);
+  }
+  function glow(x, y, rx, ry, rgb, a) {
+    ctx.save();
+    ctx.translate(x, y); ctx.scale(1, ry / rx);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, 'rgba(' + rgb + ',' + a + ')');
+    g.addColorStop(0.55, 'rgba(' + rgb + ',' + a * 0.35 + ')');
+    g.addColorStop(1, 'rgba(' + rgb + ',0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function drawSky(t) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const base = ctx.createLinearGradient(0, 0, 0, H);
+    base.addColorStop(0, '#0b0610'); base.addColorStop(0.5, '#120711'); base.addColorStop(1, '#1a0810');
+    ctx.fillStyle = base; ctx.fillRect(0, 0, W, H);
+    const drift = Math.sin(t * 0.25);
+    glow(W * (0.12 + 0.03 * drift), H * 1.02, W * 0.6, H * 0.65, '196,33,58', 0.7);
+    glow(W * (0.88 - 0.03 * drift), -H * 0.05, W * 0.45, H * 0.55, '112,72,232', 0.5);
+    glow(W * 0.66, H * (0.55 + 0.02 * drift), W * 0.3, H * 0.42, '224,69,92', 0.22);
+    for (const s of stars) {
+      const a = 0.12 + 0.45 * (0.5 + 0.5 * Math.sin(t * 1.3 + s.p));
+      ctx.fillStyle = 'rgba(255,255,255,' + a + ')';
+      ctx.fillRect(Math.round(s.x * W), Math.round(s.y * H), 1, 1);
+    }
+    // orbit rings, tilted, with the gold electron going round the middle one
+    const cx = W * 0.5, cy = H * 0.5, k = W / 1024, rot = -14 * Math.PI / 180;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+    [[430, 118, 0.16], [340, 88, 0.14], [520, 160, 0.09]].forEach(([rx, ry, a]) => {
+      ctx.strokeStyle = 'rgba(232,90,110,' + a + ')'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.ellipse(0, 0, rx * k, ry * k * (H / W) * 2.56, 0, 0, Math.PI * 2); ctx.stroke();
+    });
+    const ang = t * 0.18;
+    const ex = 340 * k * Math.cos(ang), ey = 88 * k * (H / W) * 2.56 * Math.sin(ang);
+    ctx.restore();
+    const px = cx + ex * Math.cos(rot) - ey * Math.sin(rot), py = cy + ex * Math.sin(rot) + ey * Math.cos(rot);
+    glow(px, py, 16, 16, '240,184,74', 0.75);
+    ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.arc(px, py, 2.6, 0, Math.PI * 2); ctx.fill();
+    // perspective grid floor
+    const gh = H * 0.42, top = H - gh, vx = W / 2, vy = top - gh * 0.5;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, gh); ctx.clip();
+    const fade = ctx.createLinearGradient(0, top, 0, H);
+    fade.addColorStop(0, 'rgba(214,58,80,0)'); fade.addColorStop(1, 'rgba(214,58,80,.42)');
+    ctx.strokeStyle = fade; ctx.lineWidth = 1;
+    for (let i = -40; i <= 40; i++) { ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx + i * W * 0.045, H); ctx.stroke(); }
+    const scroll = reduce ? 0 : (t * 0.25) % 1;
+    for (let j = 0; j < 30; j++) {
+      const yy = top + gh * Math.pow((j + scroll) / 30, 2.2);
+      ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke();
+    }
+    ctx.restore();
+    // calm the edges
+    const side = ctx.createLinearGradient(0, 0, W, 0);
+    side.addColorStop(0, 'rgba(6,3,8,.5)'); side.addColorStop(0.18, 'rgba(6,3,8,0)'); side.addColorStop(0.82, 'rgba(6,3,8,0)'); side.addColorStop(1, 'rgba(6,3,8,.5)');
+    ctx.fillStyle = side; ctx.fillRect(0, 0, W, H);
+  }
+
+  // ---------------------------------------------------------------- a blocky player, posed like Minecraft's model
+  const S = 12; // screen px per model px
+  const PAL = { k: '#16243a', b: '#1e2a44', n: '#22305a', c: '#7fe0ea', l: '#2a7fc8', e: '#9ff0f6', s: '#0f1828', g: '#f0b84a', r: '#e0455c' };
+  const TEX = {
+    head: ['kkkkkkkk', 'llllllll', 'kkkkkkkk', 'keekkeek', 'kkkkkkkk', 'kkkkkkkk', 'kkkkkkkk', 'ssssssss'],
+    body: ['bbbbbbbb', 'bbbggbbb', 'bblllbbb', 'bbllcbbb', 'bbllcbbb', 'bbblcbbb', 'bbbbcbbb', 'bbbbbbbb', 'ssssssss', 'bbbbbbbb', 'bbbbbbbb', 'bbbbbbbb'],
+    arm: ['bbbb', 'bbbb', 'bbbb', 'bnbb', 'bbbb', 'bbbb', 'bbbb', 'bbbb', 'cccc', 'cccc', 'cece', 'cccc'],
+    leg: ['nnnn', 'nnnn', 'nnnn', 'nnnn', 'nnnn', 'nnnn', 'nnnn', 'nnnn', 'eeee', 'eeee', 'cccc', 'ssss']
+  };
+  const texURL = {};
+  for (const [k, rows] of Object.entries(TEX)) {
+    const c = document.createElement('canvas'); c.width = rows[0].length; c.height = rows.length;
+    const x = c.getContext('2d');
+    rows.forEach((row, y) => [...row].forEach((ch, i) => { x.fillStyle = PAL[ch]; x.fillRect(i, y, 1, 1); }));
+    texURL[k] = c.toDataURL();
+  }
+  // part: [left, top, w, h] in model px; pivot as CSS transform-origin
+  const LAYOUT = {
+    rleg: [4, 20, 4, 12, 'leg', '50% 0'], lleg: [8, 20, 4, 12, 'leg', '50% 0'],
+    body: [4, 8, 8, 12, 'body', '50% 100%'],
+    rarm: [0, 8, 4, 12, 'arm', '50% 8%'], larm: [12, 8, 4, 12, 'arm', '50% 8%'],
+    head: [4, 0, 8, 8, 'head', '50% 100%']
+  };
+  function makeRig(el) {
+    const parts = {};
+    for (const [k, [l, t, w, h, tex, origin]] of Object.entries(LAYOUT)) {
+      const d = document.createElement('div');
+      d.className = 'part';
+      d.style.cssText = 'left:' + l * S + 'px;top:' + t * S + 'px;width:' + w * S + 'px;height:' + h * S + 'px;background-image:url(' + texURL[tex] + ');transform-origin:' + origin;
+      if (k === 'larm' || k === 'lleg') d.style.transform = 'scaleX(-1)';
+      el.appendChild(d);
+      parts[k] = d;
+    }
+    return parts;
+  }
+  // Front view of Minecraft's model: z rotations turn parts on screen, x rotations foreshorten them
+  // (past 90 degrees an arm points up). bx/by shift the upper body like bent knees.
+  function pose(parts, p) {
+    const sx = p.bx * S, sy = p.by * S;
+    const limb = (rx, rz, flip) => 'rotate(' + rz + 'rad) scaleY(' + Math.cos(rx).toFixed(3) + ')' + (flip ? ' scaleX(-1)' : '');
+    parts.body.style.transform = 'translate(' + sx + 'px,' + sy + 'px) rotate(' + p.bz + 'rad)';
+    parts.head.style.transform = 'translate(' + sx + 'px,' + sy + 'px) rotate(' + p.hz + 'rad) scaleX(' + Math.cos(p.hy).toFixed(3) + ') scaleY(' + Math.max(0.8, Math.cos(p.hx)).toFixed(3) + ')';
+    parts.rarm.style.transform = 'translate(' + sx + 'px,' + sy + 'px) ' + limb(p.rax, p.raz, false);
+    parts.larm.style.transform = 'translate(' + sx + 'px,' + sy + 'px) ' + limb(p.lax, p.laz, true);
+    parts.rleg.style.transform = limb(p.rlx, p.rlz, false);
+    parts.lleg.style.transform = limb(p.llx, p.llz, true);
+  }
+
+  // ---------------------------------------------------------------- dances (the same data Valence Client plays)
+  const F = DANCES.fields;
+  const list = DANCES.dances;
+  const blank = () => Object.fromEntries(F.map((k) => [k, 0]));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function vibin(t) {
+    const beats = t * 1.65, a = beats * Math.PI * 2, sway = Math.sin(t * 1.65 * Math.PI);
+    const bar = beats % 8, sm = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+    const up = bar < 5.5 ? 0 : bar < 6 ? sm((bar - 5.5) * 2) : bar < 7.5 ? 1 : 1 - sm((bar - 7.5) * 2);
+    const pump = Math.sin(a * 0.5), sh = 0.12 + 0.1 * Math.max(0, Math.sin(a));
+    const p = blank();
+    p.by = 0.9 * (0.5 - 0.5 * Math.cos(a)); p.bx = sway * 0.7; p.bz = sway * 0.07;
+    p.hx = 0.14 * Math.sin(a) - 0.05; p.hz = -sway * 0.16; p.hy = 0.22 * Math.sin(a * 0.25);
+    p.rax = lerp(-0.55 - 0.35 * pump, -2.85 + 0.18 * Math.sin(a * 2), up); p.raz = lerp(sh, 0.25, up);
+    p.lax = lerp(-0.55 + 0.35 * pump, -0.25, up); p.laz = lerp(-sh, -0.65, up);
+    p.rlx = 0.16 * pump; p.llx = -0.16 * pump; p.rlz = 0.05 + 0.05 * sway; p.llz = -0.05 + 0.05 * sway;
+    return p;
+  }
+  function frame(d, t) {
+    if (d.procedural) return vibin(t);
+    const pos = t * d.bpm / 60 * d.keysPerBeat, n = d.keys.length;
+    const i = ((Math.floor(pos) % n) + n) % n, f = pos - Math.floor(pos);
+    let e = d.snap ? Math.min(1, f * 4) : f * f * (3 - 2 * f);
+    if (d.snap) e = e * e * (3 - 2 * e);
+    const a = d.keys[i], b = d.keys[(i + 1) % n], p = blank();
+    for (const k of F) p[k] = lerp(a[k] || 0, b[k] || 0, e);
+    p.by += (d.bounce || 0) * (0.5 - 0.5 * Math.cos(t * d.bpm / 60 * Math.PI * 2));
+    return p;
+  }
+
+  const rigs = [
+    { parts: makeRig($('#rigHero')), dance: 0, t0: 0 },
+    { parts: makeRig($('#rigDance')), dance: 2, t0: 0 }
+  ];
+  function setHero(i) {
+    rigs[0].dance = (i + list.length) % list.length;
+    rigs[0].t0 = performance.now();
+    const d = list[rigs[0].dance];
+    $('#nowD').innerHTML = d.name + '<small>' + d.about + '</small>';
+  }
+  $('#prevD').onclick = () => setHero(rigs[0].dance - 1);
+  $('#nextD').onclick = () => setHero(rigs[0].dance + 1);
+  document.addEventListener('keydown', (e) => {
+    if (/^(INPUT|TEXTAREA)$/.test(document.activeElement && document.activeElement.tagName)) return;
+    if (e.key === 'ArrowRight') setHero(rigs[0].dance + 1);
+    if (e.key === 'ArrowLeft') setHero(rigs[0].dance - 1);
+  });
+  setHero(0);
+
+  const dl = $('#danceList');
+  dl.innerHTML = list.map((d, i) => '<button type="button" class="dbtn" data-d="' + i + '" aria-pressed="' + (i === rigs[1].dance) + '"><b>' + d.name + '</b><span>' + d.about + '</span></button>').join('');
+  dl.querySelectorAll('[data-d]').forEach((b) => {
+    b.onclick = () => {
+      rigs[1].dance = Number(b.dataset.d);
+      rigs[1].t0 = performance.now();
+      dl.querySelectorAll('[data-d]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      $('#danceNow').textContent = list[rigs[1].dance].name + ' · ' + list[rigs[1].dance].about;
+    };
+  });
+  $('#danceNow').textContent = list[rigs[1].dance].name + ' · ' + list[rigs[1].dance].about;
+
+  // A pose to rest on when motion is reduced
+  const restT = [0.6, 0.6];
+  function tick(now) {
+    const t = now / 1000;
+    drawSky(reduce ? 4 : t);
+    rigs.forEach((r, i) => pose(r.parts, frame(list[r.dance], reduce ? restT[i] : (now - r.t0) / 1000)));
+    if (!reduce) requestAnimationFrame(tick);
+  }
+  size();
+  window.addEventListener('resize', () => { size(); if (reduce) tick(0); });
+  requestAnimationFrame(tick);
+
+  // ---------------------------------------------------------------- mods
+  const CAT = { HUD: ['HUD', '#e63950'], VISUAL: ['Visual', '#9b6bff'], UTILITY: ['Utility', '#f0b84a'], PERFORMANCE: ['Performance', '#3fc07a'], PVP: ['PvP', '#ff7a2e'] };
+  const NEW = new Set(['emotes', 'own_nametag', 'motion_blur', 'item_physics', 'smooth_chunks', 'xp_level', 'fall_distance', 'players_nearby', 'rotation_hud', 'dimension_hud', 'compass_bar', 'chunk_info', 'frame_graph', 'weather_hud', 'looking_at', 'afk_timer', 'hotbar_numbers', 'hotbar_durability']);
+  let cat = 'ALL';
+  const tabs = $('#modTabs');
+  const counts = MODS.reduce((o, m) => { o[m[3]] = (o[m[3]] || 0) + 1; return o; }, {});
+  tabs.innerHTML = '<button type="button" class="tab" data-c="ALL" aria-pressed="true">All <b>' + MODS.length + '</b></button>'
+    + Object.entries(CAT).map(([k, [name]]) => '<button type="button" class="tab" data-c="' + k + '" aria-pressed="false">' + name + ' <b>' + (counts[k] || 0) + '</b></button>').join('')
+    + '<button type="button" class="tab" data-c="NEW" aria-pressed="false">New <b>' + MODS.filter((m) => NEW.has(m[0])).length + '</b></button>';
+  tabs.querySelectorAll('[data-c]').forEach((b) => {
+    b.onclick = () => {
+      cat = b.dataset.c;
+      tabs.querySelectorAll('[data-c]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      drawMods();
+    };
+  });
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let showAll = false;
+  function drawMods() {
+    const q = $('#modSearch').value.trim().toLowerCase();
+    const all = MODS.filter((m) => (cat === 'ALL' || (cat === 'NEW' ? NEW.has(m[0]) : m[3] === cat))
+      && (!q || (m[1] + ' ' + m[2] + ' ' + CAT[m[3]][0]).toLowerCase().includes(q)));
+    const limit = window.innerWidth < 700 ? 12 : 24;
+    const shown = showAll || q || all.length <= limit + 4 ? all : all.slice(0, limit);
+    $('#moreMods').hidden = shown.length === all.length;
+    $('#moreMods').textContent = 'Show all ' + all.length + ' mods';
+    $('#modGrid').innerHTML = shown.length
+      ? shown.map((m) => '<div class="mod' + (NEW.has(m[0]) ? ' new' : '') + '" style="--c:' + CAT[m[3]][1] + '"><i>' + esc(m[1].replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase()) + '</i><div><b>' + esc(m[1]) + '</b><span>' + esc(m[2]) + '</span></div></div>').join('')
+      : '<div class="empty">No mod matches "' + esc(q) + '". Try "zoom", "fps" or "chat".</div>';
+  }
+  $('#modSearch').oninput = drawMods;
+  $('#moreMods').onclick = () => { showAll = true; drawMods(); };
+  drawMods();
+
+  // ---------------------------------------------------------------- cosmetics
+  const COS = {
+    Hats: [['Crown', 'Gold crown set with jewels'], ['Halo', 'A glowing ring above your head'], ['Top Hat', 'Classy black hat with a band'], ['Party Hat', 'Striped hat for celebrating'], ['Beanie', 'Cozy knit hat with a pom-pom'], ['Headphones', 'Big over-ear headphones'], ['Viking Helmet', 'Iron helmet with horns'], ['Wizard Hat', 'Tall pointy hat with stars'], ['Cat Ears', 'Ears that twitch now and then'], ['Devil Horns', 'Two little curved horns']],
+    Back: [['Cape', 'Flows behind you as you run'], ['Royal Cape', 'Long cape with a fur collar'], ['Wings', 'Feathered wings that beat slowly'], ['Backpack', 'A backpack with straps and a pocket'], ['Quiver', 'A quiver full of arrows'], ['Jetpack', 'Twin tanks that fire up as you run'], ['Katana', 'A sheathed sword on your back']],
+    Extras: [['Companion', 'A little spirit that floats by you'], ['Orbit', 'Three gems circling around you'], ['Rain Cloud', 'Your own small rain cloud'], ['Slime Pet', 'A bouncy slime that hops by you'], ['Crystal', 'A floating, spinning crystal'], ['Heart Orbit', 'Hearts circling around you']]
+  };
+  $('#cosList').innerHTML = Object.entries(COS).map(([slot, items]) => '<div class="slot"><h3>' + slot + ' <small>' + items.length + ' ITEMS</small></h3><ul>'
+    + items.map(([n, d]) => '<li><b>' + n + '</b><span>' + d + '</span></li>').join('') + '</ul></div>').join('');
+})();
+</script>
+
 </body>
 </html>
