@@ -12,6 +12,6 @@ Valence Launcher signs you into Minecraft Java 1.21.11 and starts Valence Client
 
 Check this exact download on VirusTotal:
 
-https://www.virustotal.com/gui/file/d294ab3332e6e0b44bac91ddbba6bf8eda5a99d075fd48ef478eb7204329660f
+https://www.virustotal.com/gui/file/73b6f009c1e60947cacbad8b9d038108ccfb58f0fcebd4a76178aca12386c851
 
-SHA256: `d294ab3332e6e0b44bac91ddbba6bf8eda5a99d075fd48ef478eb7204329660f`
+SHA256: `73b6f009c1e60947cacbad8b9d038108ccfb58f0fcebd4a76178aca12386c851`
